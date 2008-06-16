@@ -1,0 +1,228 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="content" content="text/html; charset=utf-8">
+	<title>Image gallery</title>
+	<script type="text/javascript" src="http://www.prototypejs.org/assets/2007/8/15/prototype.js"></script>
+	<style type="text/css">
+	html {
+		overflow-y: auto;
+	}
+	body {
+		margin: 0;
+		padding: 0;
+		font-family: 'Bitstream Vera Sans', Verdana, Arial, 'Sans Serif';
+		font-size: 10pt;
+	}
+	
+	#thumbnails {
+		height: 160px;
+		padding: 12px;
+		text-align: center;
+		overflow: auto;
+		overflow-y: auto;
+	}
+	
+	#thumbnails img {
+		border: 1px solid #e0e0e0;
+		margin: 0;
+		padding: 0;
+	}
+	
+	#view_panel {
+		background: black;
+		color: white;
+		text-align: center;
+		overflow: auto;
+		overflow-x: auto;
+		overflow-y: auto;
+		height: 100px;
+		font-size: 16pt;
+		color: #ff7843;
+	}
+	
+	.actions {
+		margin-top: 12px;
+	}
+	
+	.actions input {
+		font-size: 13pt;
+	}
+	
+	#actions2 {
+		margin-bottom: 12px;
+	}
+	
+	#view {
+		margin: 12px;
+	}
+	
+	#name, #counter {
+		margin-left: 10px;
+		margin-right: 10px;
+	}
+	
+	#page_footer {
+		clear: both;
+		background: #002991;
+		color: white;
+		padding: 3px;
+	}
+	
+	#page_footer a {
+		color: #ff7843;
+	}
+	
+	#credits, #page_actions {
+		display: inline;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	
+	#page_actions {
+		margin-left: 2em;
+	}
+	
+	#page_actions li {
+		display: inline;
+	}
+	</style>
+	<script type="text/javascript">
+	function viewImage(name) {
+		$('view').update('<img src="' + name + '">');
+		$('name').update(name.escapeHTML());
+		$('actions1').show();
+		$('actions2').show();
+		
+		var children = $('thumbnails').childElements();
+		for (i = 0; i < children.length; i++) {
+			if (children[i].href.endsWith(name)) {
+				$('prev1').disabled = $('prev2').disabled = i == 0;
+				$('next1').disabled = $('next2').disabled = i == children.length - 1;
+				$('counter').update((i + 1) + ' / ' + <%= images.size %>);
+				break;
+			}
+		}
+		
+		return false;
+	}
+	
+	function viewNext() {
+		var name = getImageName($$('#view > img')[0].src);
+		var children = $('thumbnails').childElements();
+		for (i = 0; i < children.length; i++) {
+			if (children[i].href.endsWith(name)) {
+				var name = getImageName(children[i + 1].href);
+				viewImage(name);
+				break;
+			}
+		}
+	}
+	
+	function viewPrevious() {
+		var name = getImageName($$('#view > img')[0].src);
+		var children = $('thumbnails').childElements();
+		for (i = 0; i < children.length; i++) {
+			if (children[i].href.endsWith(name)) {
+				var name = getImageName(children[i - 1].href);
+				viewImage(name);
+				break;
+			}
+		}
+	}
+	
+	function expand() {
+		$$('#page_actions > .expand')[0].hide();
+		$$('#page_actions > .shrink')[0].show();
+		$('thumbnails').style.height = '400px';
+		resizePreviewPane();
+	}
+	
+	function shrink() {
+		$$('#page_actions > .expand')[0].show();
+		$$('#page_actions > .shrink')[0].hide();
+		$('thumbnails').style.height = '160px';
+		resizePreviewPane();
+	}
+	
+	function getImageName(link) {
+		return link.sub(/.*\//, '').sub(/.*\#/, '');
+	}
+	
+	function getWindowSize() {
+		var myWidth = 0, myHeight = 0;
+		if (typeof(window.innerWidth) == 'number') {
+			// Non-IE
+			myWidth = window.innerWidth;
+			myHeight = window.innerHeight;
+		} else if( document.documentElement && ( document.documentElement.clientWidth || document.documentElement.clientHeight ) ) {
+			// IE 6+ in 'standards compliant mode'
+			myWidth = document.documentElement.clientWidth;
+			myHeight = document.documentElement.clientHeight;
+		} else if( document.body && ( document.body.clientWidth || document.body.clientHeight ) ) {
+			// IE 4 compatible
+			myWidth = document.body.clientWidth;
+			myHeight = document.body.clientHeight;
+		}
+		return [myWidth, myHeight];
+	}
+	
+	function resizePreviewPane() {
+		windowSize = getWindowSize();
+		var height = windowSize[1] - $('thumbnails').getHeight() - $('page_footer').getHeight();
+		$('view_panel').style.height = height + 'px';
+	}
+	
+	function relayout() {
+		resizePreviewPane();
+		setTimeout(relayout, 1000);
+	}
+	
+	document.observe("contentloaded", relayout);
+	</script>
+</head>
+
+<body>
+
+	<div id="thumbnails">
+		<% for image in images %>
+			<a href="<%=h u image %>" onclick="return viewImage('<%=h image %>')"><img
+				src="thumbnails/<%=h u image %>" width="150" height="150" alt="<%=h image %>"></a>
+		<% end %>
+	</div>
+	
+	<div id="view_panel">
+		<div id="actions1" style="display: none" class="actions">
+			<input type="button" value="&lt; Previous" id="prev1" onclick="viewPrevious()"
+				accesskey="z" title="Firefox: Ctrl-Alt-Z; Internet Explorer: Alt-Z">
+			<span id="name"></span>
+			<input type="button" value="Next &gt;" id="next1" onclick="viewNext()"
+				accesskey="x" title="Firefox: Ctrl-Alt-X; Internet Explorer: Alt-X">
+		</div>
+
+		<div id="view">
+			<div style="margin-top: 4em">
+			Click on an image above to view it.
+			</div>
+		</div>
+		
+		<div id="actions2" style="display: none" class="actions">
+			<input type="button" value="&lt; Previous" id="prev2" onclick="viewPrevious()">
+			<span id="counter"></span>
+			<input type="button" value="Next &gt;" id="next2" onclick="viewNext()">
+		</div>
+	</div>
+	
+	<div id="page_footer">
+		<div id="credits">
+			Generated by <a href="http://izumi.plan99.net/blog/?page_id=56">Mikuru</a>.
+		</div>
+		<ul id="page_actions">
+			<li class="expand"><a href="javascript:void(expand())">Expand thumbnails panel</a></li>
+			<li class="shrink" style="display: none"><a href="javascript:void(shrink())">Shrink thumbnails panel</a></li>
+		</ul>
+	</div>
+
+</body>
+</html>
