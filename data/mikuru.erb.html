@@ -108,6 +108,7 @@
 	
 	#page_footer #page_actions li {
 		display: inline;
+		margin-right: 2em;
 	}
 	</style>
 	<script type="text/javascript">
@@ -194,10 +195,10 @@
 		<% for image in images %>
 			{
 			name: "<%=h File.basename(image.filename) %>",
-			filename: "<%=h u(image.filename) %>",
-			small_thumbnail: "<%= h u(image.small_thumbnail.filename) %>"
+			filename: "<%=h image.filename %>",
+			small_thumbnail: "<%= h image.small_thumbnail.filename %>"
 			<% if image.medium_thumbnail %>
-				, medium_thumbnail: "<%= h u(image.medium_thumbnail.filename) %>"
+				, medium_thumbnail: "<%= h image.medium_thumbnail.filename %>"
 			<% end %>
 			},
 		<% end %>
@@ -209,11 +210,11 @@
 
 	<div id="thumbnails">
 		<% images.each_with_index do |image, i| %>
-			<a href="<%=h u(image.filename) %>"
+			<a href="<%=h image.filename %>"
 			onclick="return viewImage(<%= i %>)"
 			title="<%=h File.basename(image.filename) %>">
 				<img
-				src="<%=h u(image.small_thumbnail.filename) %>"
+				src="<%=h image.small_thumbnail.filename %>"
 				width="<%= Image::SMALL_THUMBNAIL_WIDTH %>"
 				height="<%= Image::SMALL_THUMBNAIL_HEIGHT %>"
 				alt="<%=h image.filename %>">
