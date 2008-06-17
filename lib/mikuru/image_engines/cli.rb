@@ -1,3 +1,5 @@
+require 'thread'
+
 module Mikuru
 module ImageEngines
 class CLI
@@ -69,8 +71,14 @@ class CLI
 	end
 
 private
+	MUTEX = Mutex.new
+	
 	def identify!
-		`identify '#{@filename}'` =~ /(\d+)x(\d+)/
+		# The `...` triggers some kind of weird JRuby bug
+		# unless we synchronize it.
+		MUTEX.synchronize do
+			`identify '#{@filename}'` =~ /(\d+)x(\d+)/
+		end
 		@width = $1.to_i
 		@height = $2.to_i
 	end

@@ -60,7 +60,7 @@ private
 				rescue => e
 					puts "#{image.filename}: #{e} (#{e.class})"
 					puts "    " + e.backtrace.join("\n    ")
-					Thread.exit
+					exit(1)
 				end
 			end
 		else

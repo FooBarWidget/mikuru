@@ -1,4 +1,4 @@
-Copyright (c) 2007, Hongli Lai
+Copyright (c) 2007, 2008, Hongli Lai
 
 All rights reserved.
 
