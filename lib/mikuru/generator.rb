@@ -7,6 +7,7 @@ class Generator
 	THUMBNAIL_MAX_WIDTH = 150
 	THUMBNAIL_MAX_HEIGHT = 150
 	TEMPLATE_FILE = File.expand_path(File.dirname(__FILE__) + "/../../data/mikuru.erb.html")
+	CONSOLE_LOCK = Mutex.new
 	include ERB::Util
 	
 	def initialize(image_dir)
@@ -21,21 +22,7 @@ class Generator
 		start_workers
 		small_thumbnail_dir, medium_thumbnail_dir = create_thumbnail_dirs
 		images = each_image(small_thumbnail_dir, medium_thumbnail_dir) do |image|
-			if image.missing_a_thumbnail?
-				pass_to_worker do
-					if !image.small_thumbnail
-						image.create_small_thumbnail
-						puts "WRITE      #{image.small_thumbnail.filename}"
-					end
-					if !image.medium_thumbnail && image.should_have_medium_thumbnail?
-						image.create_medium_thumbnail
-						puts "WRITE      #{image.medium_thumbnail.filename}"
-					end
-					image.destroy!
-				end
-			else
-				image.destroy!
-			end
+			process_image(image)
 		end
 		wait_for_workers
 		create_gallery_page(images)
@@ -55,6 +42,30 @@ private
 			images << image
 		end
 		return images
+	end
+	
+	def process_image(image)
+		if image.missing_a_thumbnail?
+			pass_to_worker do
+				begin
+					if !image.small_thumbnail
+						image.create_small_thumbnail
+						puts "WRITE      #{image.small_thumbnail.filename}"
+					end
+					if !image.medium_thumbnail && image.should_have_medium_thumbnail?
+						image.create_medium_thumbnail
+						puts "WRITE      #{image.medium_thumbnail.filename}"
+					end
+					image.destroy!
+				rescue => e
+					puts "#{image.filename}: #{e} (#{e.class})"
+					puts "    " + e.backtrace.join("\n    ")
+					Thread.exit
+				end
+			end
+		else
+			image.destroy!
+		end
 	end
 	
 	def number_of_cpus
@@ -99,7 +110,12 @@ private
 					return
 				end
 			end
-			item.call
+			begin
+				item.call
+			rescue => e
+				puts "Exception in worker thread:\n#{e.to_str}"
+				raise
+			end
 		end
 	end
 	
@@ -133,6 +149,12 @@ private
 		end
 		File.open("index.html", "w") do |f|
 			f.write(template.result(binding))
+		end
+	end
+	
+	def puts(message)
+		CONSOLE_LOCK.synchronize do
+			Kernel::puts(message)
 		end
 	end
 end

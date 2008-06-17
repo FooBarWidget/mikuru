@@ -41,8 +41,18 @@ class CLI
 			end
 			args = ["convert", @filename, "-thumbnail", "#{w}x#{h}>", tempfile]
 		end
-		if !system(*args)
-			raise IOError, "Cannot create thumbnail."
+		
+		# On JRuby, the command may fail with an exit status of 127 (exit code 32512).
+		# Not sure why that happens, but it doesn't appear to be fatal. So we retry
+		# if that happens.
+		done = false
+		while !done
+			ret = system(*args)
+			if ret
+				done = true
+			elsif $? != 32512
+				raise IOError, "Cannot create thumbnail: exit code #{$?.exitstatus}"
+			end
 		end
 		
 		thumb = self.class.new
