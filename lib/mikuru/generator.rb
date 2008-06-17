@@ -1,7 +1,5 @@
-require 'rubygems'
 require 'erb'
 require 'thread'
-require 'fastthread'
 require 'mikuru/image'
 
 module Mikuru
