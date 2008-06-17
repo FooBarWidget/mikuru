@@ -1,4 +1,4 @@
-if RUBY_PLATFORM == "java"
+if RUBY_PLATFORM == "java" || true
 	require 'mikuru/image_engines/cli'
 	Mikuru::ImageEngine = Mikuru::ImageEngines::CLI
 else

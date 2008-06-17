@@ -8,12 +8,19 @@
 	html {
 		overflow-y: auto;
 	}
+	
 	body {
+		background: #303030;
+		color: #eeeeee;
 		margin: 0;
 		padding: 0;
 		font-family: 'Bitstream Vera Sans', Verdana, Arial, 'Sans Serif';
 		font-size: 12px;
 	}
+	
+	/*****************************************
+	 * Top part of the page: thumbnails
+	 *****************************************/
 	
 	#thumbnails {
 		height: 160px;
@@ -24,10 +31,15 @@
 	}
 	
 	#thumbnails img {
-		border: 1px solid #e0e0e0;
+		border: 1px solid #999999;
 		margin: 0;
-		padding: 0;
+		padding: 1px;
 	}
+	
+	
+	/**********************************************
+	 * Middle part of the page: image view panel
+	 **********************************************/
 	
 	#view_panel {
 		background: black;
@@ -41,31 +53,41 @@
 		color: #ff7843;
 	}
 	
-	.actions {
+	#view_panel .actions {
 		margin-top: 12px;
 	}
 	
-	.actions input {
+	#view_panel .actions input {
 		font-size: 13pt;
 	}
 	
-	#actions2 {
-		margin-bottom: 12px;
+	#view_panel #bottom_actions {
+		padding-bottom: 12px;
 	}
 	
-	#view {
+	#view_panel #view {
 		margin: 12px;
 	}
 	
-	#name, #counter {
+	#view_panel #name, #view_panel #counter {
+		display: inline-block;
+		width: 500px;
 		margin-left: 10px;
 		margin-right: 10px;
 	}
 	
+	#view_panel a img {
+		border: solid 1px #999999;
+		padding: 1px;
+	}
+	
+	/*****************************************
+	 * Bottom part of the page: footer
+	 *****************************************/
+	
 	#page_footer {
 		clear: both;
-		background: #002991;
-		color: white;
+		background: #111111;
 		padding: 3px;
 	}
 	
@@ -73,63 +95,50 @@
 		color: #ff7843;
 	}
 	
-	#credits, #page_actions {
+	#page_footer #credits, #page_footer #page_actions {
 		display: inline;
 		list-style: none;
 		margin: 0;
 		padding: 0;
 	}
 	
-	#page_actions {
+	#page_footer #page_actions {
 		margin-left: 2em;
 	}
 	
-	#page_actions li {
+	#page_footer #page_actions li {
 		display: inline;
 	}
 	</style>
 	<script type="text/javascript">
-	function viewImage(name) {
-		$('view').update('<img src="' + name + '">');
-		$('name').update(name.escapeHTML());
-		$('actions1').show();
-		$('actions2').show();
-		
-		var children = $('thumbnails').childElements();
-		for (i = 0; i < children.length; i++) {
-			if (children[i].href.endsWith(name)) {
-				$('prev1').disabled = $('prev2').disabled = i == 0;
-				$('next1').disabled = $('next2').disabled = i == children.length - 1;
-				$('counter').update((i + 1) + ' / ' + <%= images.size %>);
-				break;
-			}
+	var currentIndex = -1;
+	
+	function viewImage(index) {
+		var newImage = galleryImages[index];
+		if (newImage.medium_thumbnail) {
+			$('view').update('<a href="' + newImage.filename +
+				'" title="Click for large version"><img src="' +
+				newImage.medium_thumbnail +
+				'" alt="Click for large version"></a>');
+		} else {
+			$('view').update('<img src="' + newImage.filename + '">');
 		}
-		
+		$('name').update(newImage.name.escapeHTML());
+		$('top_actions').show();
+		$('bottom_actions').show();
+		$('prev1').disabled = $('prev2').disabled = index == 0;
+		$('next1').disabled = $('next2').disabled = index == galleryImages.length - 1;
+		$('counter').update(index + ' / ' + galleryImages.length);
+		currentIndex = index;
 		return false;
 	}
 	
 	function viewNext() {
-		var name = getImageName($$('#view > img')[0].src);
-		var children = $('thumbnails').childElements();
-		for (i = 0; i < children.length; i++) {
-			if (children[i].href.endsWith(name)) {
-				var name = getImageName(children[i + 1].href);
-				viewImage(name);
-				break;
-			}
-		}
+		viewImage(currentIndex + 1);
 	}
 	
 	function viewPrevious() {
-		var name = getImageName($$('#view > img')[0].src);
-		var children = $('thumbnails').childElements();
-		for (i = 0; i < children.length; i++) {
-			if (children[i].href.endsWith(name)) {
-				var name = getImageName(children[i - 1].href);
-				viewImage(name);
-				break;
-			}
-		}
+		viewImage(currentIndex - 1);
 	}
 	
 	function expand() {
@@ -180,26 +189,47 @@
 	}
 	
 	document.observe("contentloaded", relayout);
+	
+	var galleryImages = [
+		<% for image in images %>
+			{
+			name: "<%=h File.basename(image.filename) %>",
+			filename: "<%=h u(image.filename) %>",
+			small_thumbnail: "<%= h u(image.small_thumbnail.filename) %>"
+			<% if image.medium_thumbnail %>
+				, medium_thumbnail: "<%= h u(image.medium_thumbnail.filename) %>"
+			<% end %>
+			},
+		<% end %>
+	];
 	</script>
 </head>
 
 <body>
 
 	<div id="thumbnails">
-		<% for image in images %>
-			<a href="<%=h u(image.filename) %>" onclick="return viewImage('<%=h image.filename %>')"><img
-				src="<%=h u(image.small_thumbnail.filename) %>" width="150" height="150" alt="<%=h image.filename %>"></a>
+		<% images.each_with_index do |image, i| %>
+			<a href="<%=h u(image.filename) %>"
+			onclick="return viewImage(<%= i %>)"
+			title="<%=h File.basename(image.filename) %>">
+				<img
+				src="<%=h u(image.small_thumbnail.filename) %>"
+				width="<%= Image::SMALL_THUMBNAIL_WIDTH %>"
+				height="<%= Image::SMALL_THUMBNAIL_HEIGHT %>"
+				alt="<%=h image.filename %>">
+			</a>
 		<% end %>
 	</div>
 	
 	<div id="view_panel">
-		<div id="actions1" style="display: none" class="actions">
+		<div id="top_actions" style="display: none" class="actions">
 			<input type="button" value="&lt; Previous" id="prev1" onclick="viewPrevious()"
 				accesskey="z" title="Firefox: Ctrl-Alt-Z; Internet Explorer: Alt-Z">
 			<span id="name"></span>
 			<input type="button" value="Next &gt;" id="next1" onclick="viewNext()"
 				accesskey="x" title="Firefox: Ctrl-Alt-X; Internet Explorer: Alt-X">
 		</div>
+		<div class="clear"></div>
 
 		<div id="view">
 			<div style="margin-top: 4em">
@@ -207,11 +237,12 @@
 			</div>
 		</div>
 		
-		<div id="actions2" style="display: none" class="actions">
+		<div id="bottom_actions" style="display: none" class="actions">
 			<input type="button" value="&lt; Previous" id="prev2" onclick="viewPrevious()">
 			<span id="counter"></span>
 			<input type="button" value="Next &gt;" id="next2" onclick="viewNext()">
 		</div>
+		<div class="clear"></div>
 	</div>
 	
 	<div id="page_footer">

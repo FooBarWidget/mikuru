@@ -1,6 +1,8 @@
 module Mikuru
 module ImageEngines
 class CLI
+	BACKGROUND_COLOR = "black"
+
 	def initialize(filename = nil)
 		@filename = filename
 	end
@@ -21,12 +23,25 @@ class CLI
 		end
 	end
 	
-	def create_thumbnail(max_width, max_height)
+	def create_thumbnail(max_width, max_height, with_borders)
 		tempfile = "/tmp/mikuru-#{$$}-#{rand 1000000}.tmp.jpg"
-		if !system("convert", "-size", "#{max_width}x#{max_height}", @filename,
-		   "-thumbnail", "#{max_width}x#{max_height}>", "pattern:gray100",
-		   "+swap", "-gravity", "center", "-composite",
-		   tempfile)
+		if with_borders
+			 args = ["convert", "-size", "#{max_width}x#{max_height}",
+				@filename, "-thumbnail", "#{max_width}x#{max_height}>",
+				"-gravity", "center", "-crop", "#{max_width}x#{max_height}+0+0\!",
+				"-background", BACKGROUND_COLOR, "-flatten",
+				tempfile]
+		else
+			if width > height
+				w = max_width
+				h = max_width
+			else
+				w = max_height
+				h = max_height
+			end
+			args = ["convert", @filename, "-thumbnail", "#{w}x#{h}>", tempfile]
+		end
+		if !system(*args)
 			raise IOError, "Cannot create thumbnail."
 		end
 		

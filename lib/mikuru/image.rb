@@ -3,6 +3,11 @@ require 'mikuru/image_engine'
 
 module Mikuru
 class Image
+	SMALL_THUMBNAIL_WIDTH = 125
+	SMALL_THUMBNAIL_HEIGHT = 125
+	MEDIUM_THUMBNAIL_WIDTH = 900
+	MEDIUM_THUMBNAIL_HEIGHT = 1000
+
 	attr_accessor :filename
 	
 	def initialize(filename, small_thumbnail_dir = "small_thumbs", medium_thumbnail_dir = "medium_thumbs")
@@ -49,7 +54,6 @@ class Image
 	def small_thumbnail
 		if !@small_thumbnail
 			filename = "#{@small_thumbnail_dir}/#{File.basename(@filename)}"
-			#puts "check #{filename}"
 			if File.exist?(filename)
 				@small_thumbnail = Image.new(filename)
 			end
@@ -74,18 +78,19 @@ class Image
 	def create_small_thumbnail
 		@small_thumbnail = create_thumbnail(
 			"#{@small_thumbnail_dir}/#{File.basename(@filename)}",
-			150, 150)
+			SMALL_THUMBNAIL_WIDTH, SMALL_THUMBNAIL_HEIGHT)
 	end
 	
 	def create_medium_thumbnail
 		@medium_thumbnail = create_thumbnail(
 			"#{@medium_thumbnail_dir}/#{File.basename(@filename)}",
-			600, 800)
+			MEDIUM_THUMBNAIL_WIDTH, MEDIUM_THUMBNAIL_HEIGHT,
+			false)
 	end
 
 private
-	def create_thumbnail(filename, max_width, max_height)
-		thumb = engine.create_thumbnail(max_width, max_height)
+	def create_thumbnail(filename, max_width, max_height, with_borders = true)
+		thumb = engine.create_thumbnail(max_width, max_height, with_borders)
 		thumb.save(filename)
 		
 		image = Image.new(filename)
