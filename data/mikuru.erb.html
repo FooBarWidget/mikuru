@@ -12,7 +12,7 @@
 		margin: 0;
 		padding: 0;
 		font-family: 'Bitstream Vera Sans', Verdana, Arial, 'Sans Serif';
-		font-size: 10pt;
+		font-size: 12px;
 	}
 	
 	#thumbnails {
@@ -187,8 +187,8 @@
 
 	<div id="thumbnails">
 		<% for image in images %>
-			<a href="<%=h u image %>" onclick="return viewImage('<%=h image %>')"><img
-				src="thumbnails/<%=h u image %>" width="150" height="150" alt="<%=h image %>"></a>
+			<a href="<%=h u(image.filename) %>" onclick="return viewImage('<%=h image.filename %>')"><img
+				src="<%=h u(image.small_thumbnail.filename) %>" width="150" height="150" alt="<%=h image.filename %>"></a>
 		<% end %>
 	</div>
 	
